@@ -1,0 +1,44 @@
+import { useEffect, useState } from "react";
+import { eventService } from "../../services/eventService";
+import EventCard from "../../components/user/EventCardComponent";
+import { registrationService } from "../../services/registrationService";
+
+export default function DashBoard() {
+  const [events, setEvents] = useState([]);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await eventService.getAllEvents();
+        setEvents(Array.isArray(data) ? data : []);
+      } catch {
+        setEvents([]);
+      }
+    })();
+  }, []);
+
+  const register = async (event) => {
+    setMsg("");
+    try {
+      const res = await registrationService.register(event.id);
+      setMsg(`✅ Registered! Your Registration ID: ${res?.registrationId || "(check backend response)"}`);
+    } catch (e) {
+      setMsg(e?.response?.data?.message || "❌ Registration failed");
+    }
+  };
+
+  return (
+    <div className="row">
+      <h1 style={{ margin: 0 }}>User Dashboard</h1>
+      {msg && <div className="card">{msg}</div>}
+
+      <div style={{ display: "grid", gap: 12 }}>
+        {events.map((ev) => (
+          <EventCard key={ev.id} event={ev} onPrimary={register} primaryText="Register" />
+        ))}
+        {events.length === 0 && <div className="card">No events found.</div>}
+      </div>
+    </div>
+  );
+}
